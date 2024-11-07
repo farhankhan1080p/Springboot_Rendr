@@ -5,6 +5,9 @@ import com.example.SpringMongoProject.Service.StudentServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // For password hashing
+
+
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("api/v1/student")
@@ -12,6 +15,30 @@ public class StudentController {
 
     @Autowired
     private StudentServices studentServices;
+
+    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    // Signup endpoint
+    @PostMapping("/signup")
+    public String signup(@RequestBody Student student) {
+        if (studentServices.getStudentByEmail(student.getEmail()) != null) {
+            return "Email already exists!";
+        }
+        studentServices.saveorUpdate(student);
+        return "Signup successful";
+    }
+
+    // Login endpoint
+    @PostMapping("/login")
+    public String login(@RequestBody Student student) {
+        Student existingStudent = studentServices.getStudentByEmail(student.getEmail());
+
+        if (existingStudent != null && passwordEncoder.matches(student.getPassword(), existingStudent.getPassword())) {
+            return "Login successful";
+        } else {
+            return "Invalid credentials";
+        }
+    }
 
     @PostMapping(value = "/save")
     private String saveStudent(@RequestBody Student students) {
